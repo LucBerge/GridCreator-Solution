@@ -40,10 +40,15 @@
             Chemin = MaFenetre.FileName
 
             File = My.Computer.FileSystem.OpenTextFileWriter(Chemin, True)    'Ouvre le flux et créer le fichier si nécessaire
-            For Each Point In MonProjet.PointsOffset
-                File.WriteLine(Replace(Replace(TextBox.Text, "%X", Point.X + MonProjet.Offset.X), "%Y", Point.Y + MonProjet.Offset.Y))
+
+            File.WriteLine("Nombre de blocs = " & MonProjet.PointsOffset.Count) 'Ecrit le nombre de bloc
+            File.WriteLine("")  'Saut de ligne
+
+            For Each Point In MonProjet.PointsOffset    'Pour chaque point
+                File.WriteLine(Replace(Replace(Replace(TextBox.Text, "%C", MonProjet.PointsOffset.IndexOf(Point)), "%X", Point.X + MonProjet.Offset.X), "%Y", Point.Y + MonProjet.Offset.Y))  'Ajoute la ligne correspondant au bloc
             Next
-            File.WriteLine("")
+
+            File.WriteLine("")  'Saut de ligne
             File.Close()
         End If
     End Sub
@@ -103,7 +108,9 @@
             ElseIf e.KeyCode = Keys.Down Then
                 MonProjet.PointsActuel += New Point(0, 1)
             ElseIf e.KeyCode = Keys.Enter Then
-                MonProjet.PointsOffset.Add(MonProjet.PointsActuel)
+                If MonProjet.PointsOffset.Contains(MonProjet.PointsActuel) = False Then
+                    MonProjet.PointsOffset.Add(MonProjet.PointsActuel)
+                End If
             ElseIf e.KeyCode = Keys.Delete Then
                 If MonProjet.PointsActuel <> New Point(0, 0) Then
                     MonProjet.PointsOffset.Remove(MonProjet.PointsActuel)

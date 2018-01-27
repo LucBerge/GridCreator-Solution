@@ -6,7 +6,7 @@ Public Class Projet
     Public Offset As New Point(0, 0)
 
     Public NB As Integer = 11
-    Public Chaine As String = "Grille.Ajoute_Vertex(compteur, New Point(%X, %Y), Mondes.Normal)"
+    Public Chaine As String = "Grille.Ajoute_Vertex(%C, New Point(%X, %Y), Mondes.Normal)"
 
     '==============================================================
     '   NEW
