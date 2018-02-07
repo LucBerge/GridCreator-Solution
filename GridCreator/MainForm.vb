@@ -1,9 +1,17 @@
 ﻿Public Class MainForm
 
-    Public BMP As Bitmap
-    Public Canvas As Graphics
+    Const TempsClic As Single = 0.1
 
+    Public Canvas As Graphics
     Public MonProjet As New Projet()
+
+    Private RatioLargeurHauteur As Single = 68 / 50
+    Private Largeur As Integer
+    Private Hauteur As Integer
+
+    Private EstEnfonce As Boolean = False
+    Private DateDebut, DateFin As Date
+    Private PositionDebut, AnciennePosition, PositionFin As Point
 
     '==============================================================
     '   NEW
@@ -11,15 +19,13 @@
 
     Sub New()
         InitializeComponent()
-        MonProjet.PointsOffset.Add(New Point(0, 0))
-        BMP = New Bitmap(PictureBox.Width, PictureBox.Height)
-        Canvas = Graphics.FromImage(BMP)
+        Canvas = PictureBox.CreateGraphics()
 
         If My.Application.CommandLineArgs.Count = 1 Then
             Charger(MonProjet, My.Application.CommandLineArgs.Item(0))
         End If
 
-        AfficherImage()
+        GenererImage()
 
     End Sub
 
@@ -41,11 +47,11 @@
 
             File = My.Computer.FileSystem.OpenTextFileWriter(Chemin, True)    'Ouvre le flux et créer le fichier si nécessaire
 
-            File.WriteLine("Nombre de blocs = " & MonProjet.PointsOffset.Count) 'Ecrit le nombre de bloc
+            File.WriteLine("Nombre de blocs = " & MonProjet.Blocs.Count) 'Ecrit le nombre de bloc
             File.WriteLine("")  'Saut de ligne
 
-            For Each Point In MonProjet.PointsOffset    'Pour chaque point
-                File.WriteLine(Replace(Replace(Replace(TextBox.Text, "%C", MonProjet.PointsOffset.IndexOf(Point)), "%X", Point.X + MonProjet.Offset.X), "%Y", Point.Y + MonProjet.Offset.Y))  'Ajoute la ligne correspondant au bloc
+            For Each Point In MonProjet.Blocs    'Pour chaque point
+                File.WriteLine(Replace(Replace(Replace(TextBox.Text, "%C", MonProjet.Blocs.IndexOf(Point)), "%X", Point.X + MonProjet.BlocVert.X), "%Y", Point.Y + MonProjet.BlocVert.Y))  'Ajoute la ligne correspondant au bloc
             Next
 
             File.WriteLine("")  'Saut de ligne
@@ -54,12 +60,12 @@
     End Sub
 
     '==============================================================
-    '   EVENEMENTS
+    '   MENU
     '==============================================================
 
     Private Sub OuvrirToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles OuvrirToolStripMenuItem.Click
         If Ouvrir(MonProjet) Then
-            AfficherImage()
+            GenererImage()
         End If
     End Sub
     Private Sub EnregistrerToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles EnregistrerToolStripMenuItem.Click
@@ -80,143 +86,132 @@
                 "Flèches directionnelles = Déplacer le bloc rouge", MsgBoxStyle.Information)
     End Sub
 
-    Private Sub Validated(sender As Object, e As EventArgs) Handles XBox.Validated, YBox.Validated, TextBox.Validated, XBox.MouseLeave, YBox.MouseLeave, TextBox.MouseLeave
+    '==============================================================
+    '   EVENEMENTS TEXTBOX
+    '==============================================================
 
-        XBox.Text = Val(XBox.Text)
+    Private Sub XBox_Validated(sender As Object, e As EventArgs) Handles XBox.Validated
+        XBox.Text = XBox.Text
+        MonProjet.BlocVert.X = Val(XBox.Text)
+        GenererImage()
+    End Sub
+    Private Sub YBox_Validated(sender As Object, e As EventArgs) Handles YBox.Validated
         YBox.Text = Val(YBox.Text)
-        MonProjet.Offset = New Point(XBox.Text, YBox.Text)
-
+        MonProjet.BlocVert.Y = Val(YBox.Text)
+        GenererImage()
+    End Sub
+    Private Sub TextBox_Validated(sender As Object, e As EventArgs) Handles TextBox.Validated
         MonProjet.Chaine = TextBox.Text
+        GenererImage()
+    End Sub
 
-        XBox.ReadOnly = True
-        YBox.ReadOnly = True
-        TextBox.ReadOnly = True
+    '==============================================================
+    '   EVENEMENTS TEXTBOX
+    '==============================================================
 
-        AfficherImage()
+    Private Sub PictureBox_MouseDown(sender As Object, e As MouseEventArgs) Handles PictureBox.MouseDown
+
+        DateDebut = DateTime.Now
+        PositionDebut = PictureBox.MousePosition
+        AnciennePosition = PictureBox.MousePosition
+        EstEnfonce = True
 
     End Sub
-    Private Sub MainForm_KeyUp(sender As Object, e As KeyEventArgs) Handles MyBase.KeyUp, PictureBox.KeyUp, XBox.KeyUp, YBox.KeyUp, TextBox.KeyUp, AddButton.KeyUp, SubButton.KeyUp, ScriptButton.KeyUp
+    Private Sub PictureBox_MouseMove(sender As Object, e As MouseEventArgs) Handles PictureBox.MouseMove
 
-        If e.KeyCode = Keys.Right Or e.KeyCode = Keys.Left Or e.KeyCode = Keys.Up Or e.KeyCode = Keys.Down Or e.KeyCode = Keys.Enter Or e.KeyCode = Keys.Delete Then
+        Dim PointsActuel As Point = BlocVise()
+        PositionLabel.Text = (PointsActuel.X + MonProjet.BlocVert.X) & ":" & (PointsActuel.Y + MonProjet.BlocVert.Y)
 
-            If e.KeyCode = Keys.Right Then
-                MonProjet.PointsActuel += New Point(1, 0)
-            ElseIf e.KeyCode = Keys.Left Then
-                MonProjet.PointsActuel += New Point(-1, 0)
-            ElseIf e.KeyCode = Keys.Up Then
-                MonProjet.PointsActuel += New Point(0, -1)
-            ElseIf e.KeyCode = Keys.Down Then
-                MonProjet.PointsActuel += New Point(0, 1)
-            ElseIf e.KeyCode = Keys.Enter Then
-                If MonProjet.PointsOffset.Contains(MonProjet.PointsActuel) = False Then
-                    MonProjet.PointsOffset.Add(MonProjet.PointsActuel)
+        If EstEnfonce = True And (DateTime.Now.Ticks - DateDebut.Ticks) / 10000000 > TempsClic Then                           'Si un clic est enfoncée
+            MonProjet.Offset = MonProjet.Offset + (AnciennePosition - PictureBox.MousePosition)
+            AnciennePosition = PictureBox.MousePosition
+            GenererImage()
+        End If
+
+    End Sub
+    Private Sub PictureBox_MouseUp(sender As Object, e As MouseEventArgs) Handles PictureBox.MouseUp
+
+        Dim Bloc As Point
+        EstEnfonce = False
+        PositionFin = PictureBox.MousePosition
+
+        'If PositionAppui.Equals(PositionRelache) Then                      'Si le clic a eu lieu au même endroit
+        If (DateTime.Now.Ticks - DateDebut.Ticks) / 10000000 < TempsClic Then     'Si le clic a eu lieu au même endroit
+
+            Bloc = BlocVise()
+
+            If e.Button = MouseButtons.Left Then
+                If MonProjet.Blocs.Contains(Bloc) = False Then
+                    MonProjet.Blocs.Add(Bloc)
                 End If
-            ElseIf e.KeyCode = Keys.Delete Then
-                If MonProjet.PointsActuel <> New Point(0, 0) Then
-                    MonProjet.PointsOffset.Remove(MonProjet.PointsActuel)
+            ElseIf e.Button = MouseButtons.Right Then
+
+                If Bloc <> New Point(0, 0) Then
+                    MonProjet.Blocs.Remove(Bloc)
                 End If
             End If
 
-            AfficherImage()
-
+            GenererImage()
         End If
 
     End Sub
-    Private Sub AddButton_Click(sender As Object, e As EventArgs) Handles AddButton.Click
-        If (MonProjet.NB > 5) Then
-            MonProjet.NB -= 2
-            AfficherImage()
+    Private Sub PictureBox_MouseWheel(sender As Object, e As MouseEventArgs) Handles MyBase.MouseWheel
+        If e.Delta < 0 Then
+            If MonProjet.NB < 100 Then
+                MonProjet.NB += 2
+                GenererImage()
+            End If
+        Else
+            If (MonProjet.NB > 5) Then
+                MonProjet.NB -= 2
+                GenererImage()
+            End If
         End If
     End Sub
-    Private Sub SubButton_Click(sender As Object, e As EventArgs) Handles SubButton.Click
-        MonProjet.NB += 2
-        AfficherImage()
-    End Sub
-
-    Private Sub MouseHover(sender As Object, e As EventArgs) Handles XBox.MouseHover
-        XBox.ReadOnly = False
-    End Sub
-    Private Sub YBox_MouseHover(sender As Object, e As EventArgs) Handles YBox.MouseHover
-        YBox.ReadOnly = False
-    End Sub
-    Private Sub TextBox_MouseHover(sender As Object, e As EventArgs) Handles XBox.MouseHover, YBox.MouseHover, TextBox.MouseHover
-        XBox.ReadOnly = False
-        YBox.ReadOnly = False
-        TextBox.ReadOnly = False
-    End Sub
 
     '==============================================================
-    '   DESSIN
+    '   AUTRE
     '==============================================================
 
-    Private Sub AfficherImage()
+    Private Sub GenererImage()
 
-        Dim RatioLargeurHauteur As Single = 68 / 50
+        Largeur = PictureBox.Width / MonProjet.NB
+        Hauteur = Largeur / RatioLargeurHauteur
 
-        Dim PlusDroite As Point = PlusDroitePoint()
-        Dim PlusGauche As Point = PlusGauchePoint()
-        Dim PlusHaut As Point = PlusHautPoint()
-        Dim PlusBas As Point = PlusDroitePoint()
+        Canvas.FillRectangle(Brushes.Beige, 0, 0, PictureBox.Width, PictureBox.Height)
+        Canvas.FillRectangle(Brushes.Green, MonProjet.Blocs(0).X * Largeur - MonProjet.Offset.X, MonProjet.Blocs(0).Y * Hauteur - MonProjet.Offset.Y, Largeur, Hauteur)
 
-        Dim NbPointLargeur As Integer = Math.Abs(PlusGauche.X - PlusDroite.X) + 1
-        Dim NbPointHauteur As Integer = Math.Abs(PlusHaut.Y - PlusBas.Y) + 1
-
-        Dim Largeur As Integer = BMP.Width / MonProjet.NB
-        Dim Hauteur As Integer = Largeur / RatioLargeurHauteur
-
-        Canvas.FillRectangle(Brushes.Beige, 0, 0, BMP.Width, BMP.Height)
-
-        For Each Point In MonProjet.PointsOffset
-            Point = Point - MonProjet.PointsActuel
-            Canvas.FillRectangle(Brushes.Black, CInt((BMP.Width - Largeur) / 2) + Point.X * Largeur, CInt((BMP.Height - Hauteur) / 2) + Point.Y * Hauteur, Largeur, Hauteur)
+        For Indice = 1 To MonProjet.Blocs.Count - 1
+            Canvas.FillRectangle(Brushes.Black, MonProjet.Blocs(Indice).X * Largeur - MonProjet.Offset.X, MonProjet.Blocs(Indice).Y * Hauteur - MonProjet.Offset.Y, Largeur, Hauteur)
         Next
 
-        Dim PointOrigine As Point = MonProjet.PointsOffset(0) - MonProjet.PointsActuel
-        Canvas.FillRectangle(Brushes.Green, CInt((BMP.Width - Largeur) / 2) + PointOrigine.X * Largeur, CInt((BMP.Height - Hauteur) / 2) + PointOrigine.Y * Hauteur, Largeur, Hauteur)
-
-        Canvas.FillRectangle(Brushes.Red, CInt((BMP.Width - Largeur) / 2), CInt((BMP.Height - Hauteur) / 2), Largeur, Hauteur)
-        PositionLabel.Text = (MonProjet.PointsActuel.X + MonProjet.Offset.X) & ":" & (MonProjet.PointsActuel.Y + MonProjet.Offset.Y)
         TextBox.Text = MonProjet.Chaine
 
-        PictureBox.Image = BMP
-
     End Sub
+    Private Function BlocVise() As Point
 
-    Private Function PlusDroitePoint() As Point
-        Dim Elus As Point = MonProjet.PointsActuel
-        For Each Point In MonProjet.PointsOffset
-            If Point.X > Elus.X Then
-                Elus = Point
-            End If
-        Next
-        Return Elus
-    End Function
-    Private Function PlusGauchePoint() As Point
-        Dim Elus As Point = MonProjet.PointsActuel
-        For Each Point In MonProjet.PointsOffset
-            If Point.X < Elus.X Then
-                Elus = Point
-            End If
-        Next
-        Return Elus
-    End Function
-    Private Function PlusHautPoint() As Point
-        Dim Elus As Point = MonProjet.PointsActuel
-        For Each Point In MonProjet.PointsOffset
-            If Point.Y < Elus.Y Then
-                Elus = Point
-            End If
-        Next
-        Return Elus
-    End Function
-    Private Function PlusBasPoint() As Point
-        Dim Elus As Point = MonProjet.PointsActuel
-        For Each Point In MonProjet.PointsOffset
-            If Point.Y > Elus.Y Then
-                Elus = Point
-            End If
-        Next
-        Return Elus
+        Dim SigneX, SigneY As Byte
+        Dim BlocVisee As Point
+
+        Dim PositionSouris As Point = PictureBox.PointToClient(Cursor.Position)
+        Dim PositionImage As Point = PositionSouris + MonProjet.Offset
+
+        If PositionImage.X > 0 Then
+            SigneX = 0
+        Else
+            SigneX = 1
+        End If
+        If PositionImage.Y > 0 Then
+            SigneY = 0
+        Else
+            SigneY = 1
+        End If
+
+        BlocVisee.X = PositionImage.X \ Largeur - SigneX
+        BlocVisee.Y = PositionImage.Y \ Hauteur - SigneY
+
+        Return BlocVisee
+
     End Function
 
 End Class

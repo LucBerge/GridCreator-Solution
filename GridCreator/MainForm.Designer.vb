@@ -36,14 +36,14 @@ Partial Class MainForm
         Me.AideToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.TextBox = New System.Windows.Forms.TextBox()
         Me.Label2 = New System.Windows.Forms.Label()
-        Me.SubButton = New System.Windows.Forms.Button()
-        Me.AddButton = New System.Windows.Forms.Button()
         CType(Me.PictureBox, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.MenuStrip.SuspendLayout()
         Me.SuspendLayout()
         '
         'PictureBox
         '
+        Me.PictureBox.BackColor = System.Drawing.Color.Beige
+        Me.PictureBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.PictureBox.Location = New System.Drawing.Point(12, 104)
         Me.PictureBox.Name = "PictureBox"
         Me.PictureBox.Size = New System.Drawing.Size(1141, 792)
@@ -144,7 +144,7 @@ Partial Class MainForm
         Me.TextBox.Name = "TextBox"
         Me.TextBox.Size = New System.Drawing.Size(486, 22)
         Me.TextBox.TabIndex = 7
-        Me.TextBox.Text = "Grille.Ajoute_Vertex(compteur, New Point(%X, %Y), Mondes.Normal)"
+        Me.TextBox.Text = "Grille.Ajoute_Vertex(%C, New Point(%X, %Y), Mondes.Normal)"
         Me.TextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
         '
         'Label2
@@ -158,31 +158,11 @@ Partial Class MainForm
     "acé par la valeur en Y)"
         Me.Label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         '
-        'SubButton
-        '
-        Me.SubButton.Location = New System.Drawing.Point(242, 63)
-        Me.SubButton.Name = "SubButton"
-        Me.SubButton.Size = New System.Drawing.Size(49, 36)
-        Me.SubButton.TabIndex = 9
-        Me.SubButton.Text = "-"
-        Me.SubButton.UseVisualStyleBackColor = True
-        '
-        'AddButton
-        '
-        Me.AddButton.Location = New System.Drawing.Point(242, 31)
-        Me.AddButton.Name = "AddButton"
-        Me.AddButton.Size = New System.Drawing.Size(49, 35)
-        Me.AddButton.TabIndex = 10
-        Me.AddButton.Text = "+"
-        Me.AddButton.UseVisualStyleBackColor = True
-        '
         'MainForm
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(1165, 908)
-        Me.Controls.Add(Me.AddButton)
-        Me.Controls.Add(Me.SubButton)
         Me.Controls.Add(Me.Label2)
         Me.Controls.Add(Me.TextBox)
         Me.Controls.Add(Me.ScriptButton)
@@ -216,7 +196,5 @@ Partial Class MainForm
     Friend WithEvents EnregistrerSousToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents TextBox As TextBox
     Friend WithEvents Label2 As Label
-    Friend WithEvents SubButton As Button
-    Friend WithEvents AddButton As Button
     Friend WithEvents AideToolStripMenuItem As ToolStripMenuItem
 End Class
