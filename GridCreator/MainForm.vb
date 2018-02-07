@@ -1,11 +1,19 @@
 ﻿Public Class MainForm
 
+    '==============================================================
+    '   CONSTANTES
+    '==============================================================
+
     Const TempsClic As Single = 0.1
+    Const RatioLargeurHauteur As Single = 68 / 50
+
+    '==============================================================
+    '   VARIABLES
+    '==============================================================
 
     Public Canvas As Graphics
     Public MonProjet As New Projet()
 
-    Private RatioLargeurHauteur As Single = 68 / 50
     Private Largeur As Integer
     Private Hauteur As Integer
 
@@ -22,7 +30,10 @@
         Canvas = PictureBox.CreateGraphics()
 
         If My.Application.CommandLineArgs.Count = 1 Then
-            Charger(MonProjet, My.Application.CommandLineArgs.Item(0))
+            Dim Erreur As ErreursSerialization = Charger(MonProjet, My.Application.CommandLineArgs.Item(0))
+            If Erreur = ErreursSerialization.Corrompu Then
+                Afficher_Erreurs_Serialization(Erreur)
+            End If
         End If
 
         GenererImage()
@@ -64,8 +75,11 @@
     '==============================================================
 
     Private Sub OuvrirToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles OuvrirToolStripMenuItem.Click
-        If Ouvrir(MonProjet) Then
+        Dim Erreur As ErreursSerialization = Ouvrir(MonProjet)
+        If Erreur = ErreursSerialization.Aucune Then
             GenererImage()
+        Else
+            Afficher_Erreurs_Serialization(Erreur)
         End If
     End Sub
     Private Sub EnregistrerToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles EnregistrerToolStripMenuItem.Click
@@ -167,6 +181,22 @@
                 GenererImage()
             End If
         End If
+    End Sub
+
+    '==============================================================
+    '   DRAG DROP
+    '==============================================================
+
+    Private Sub MainForm_DragDrop(sender As Object, e As DragEventArgs) Handles MyBase.DragDrop
+        Dim Erreur As ErreursSerialization = Glisser(e)
+        If Erreur = ErreursSerialization.Aucune Then
+            GenererImage()
+        Else
+            Afficher_Erreurs_Serialization(Erreur)
+        End If
+    End Sub
+    Private Sub MainForm_DragEnter(sender As Object, e As DragEventArgs) Handles MyBase.DragEnter
+        Glisser_Entrer(e)
     End Sub
 
     '==============================================================
