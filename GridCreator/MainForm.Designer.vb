@@ -22,6 +22,7 @@ Partial Class MainForm
     'Ne la modifiez pas à l'aide de l'éditeur de code.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        Me.components = New System.ComponentModel.Container()
         Me.PictureBox = New System.Windows.Forms.PictureBox()
         Me.PositionLabel = New System.Windows.Forms.Label()
         Me.XBox = New System.Windows.Forms.TextBox()
@@ -36,6 +37,7 @@ Partial Class MainForm
         Me.AideToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.TextBox = New System.Windows.Forms.TextBox()
         Me.Label2 = New System.Windows.Forms.Label()
+        Me.Timer1 = New System.Windows.Forms.Timer(Me.components)
         CType(Me.PictureBox, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.MenuStrip.SuspendLayout()
         Me.SuspendLayout()
@@ -158,6 +160,10 @@ Partial Class MainForm
     "acé par la valeur en Y)"
         Me.Label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         '
+        'Timer1
+        '
+        Me.Timer1.Enabled = True
+        '
         'MainForm
         '
         Me.AllowDrop = True
@@ -198,4 +204,5 @@ Partial Class MainForm
     Friend WithEvents TextBox As TextBox
     Friend WithEvents Label2 As Label
     Friend WithEvents AideToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents Timer1 As Timer
 End Class

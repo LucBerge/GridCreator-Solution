@@ -95,7 +95,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Projet.vb" />
-    <Compile Include="Serialization.vb" />
+    <Compile Include="Serialisation.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MainForm.resx">

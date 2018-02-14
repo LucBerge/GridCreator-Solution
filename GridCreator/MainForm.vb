@@ -6,6 +6,11 @@
 
     Const TempsClic As Single = 0.1
     Const RatioLargeurHauteur As Single = 68 / 50
+    Const FormatFichier As String = "GridCreator"
+
+    Private CouleurFont As Brush = Brushes.Beige
+    Private CouleurBloc As Brush = Brushes.Black
+    Private CouleurOrigine As Brush = Brushes.Green
 
     '==============================================================
     '   VARIABLES
@@ -21,6 +26,8 @@
     Private DateDebut, DateFin As Date
     Private PositionDebut, AnciennePosition, PositionFin As Point
 
+    Private MaSerialisation As New Serialisation(FormatFichier)
+
     '==============================================================
     '   NEW
     '==============================================================
@@ -30,13 +37,13 @@
         Canvas = PictureBox.CreateGraphics()
 
         If My.Application.CommandLineArgs.Count = 1 Then
-            Dim Erreur As ErreursSerialization = Charger(MonProjet, My.Application.CommandLineArgs.Item(0))
+            Dim Erreur As ErreursSerialization = MaSerialisation.Charger(MonProjet, My.Application.CommandLineArgs.Item(0))
             If Erreur = ErreursSerialization.Corrompu Then
-                Afficher_Erreurs_Serialization(Erreur)
+                MaSerialisation.Afficher_Erreurs_Serialization(Erreur)
             End If
         End If
 
-        GenererImage()
+        Generer_Image()
 
     End Sub
 
@@ -75,18 +82,18 @@
     '==============================================================
 
     Private Sub OuvrirToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles OuvrirToolStripMenuItem.Click
-        Dim Erreur As ErreursSerialization = Ouvrir(MonProjet)
+        Dim Erreur As ErreursSerialization = MaSerialisation.Ouvrir(MonProjet)
         If Erreur = ErreursSerialization.Aucune Then
-            GenererImage()
+            Generer_Image()
         Else
-            Afficher_Erreurs_Serialization(Erreur)
+            MaSerialisation.Afficher_Erreurs_Serialization(Erreur)
         End If
     End Sub
     Private Sub EnregistrerToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles EnregistrerToolStripMenuItem.Click
-        Enregistrer(MonProjet)
+        MaSerialisation.Enregistrer(MonProjet)
     End Sub
     Private Sub EnregistrerSousToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles EnregistrerSousToolStripMenuItem.Click
-        Enregistrer_Sous(MonProjet)
+        MaSerialisation.Enregistrer_Sous(MonProjet)
     End Sub
     Private Sub AideToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles AideToolStripMenuItem.Click
         MsgBox("L'outil GridCreator permet de créer des grilles et de générer le script correspondant." & vbCrLf & vbCrLf &
@@ -107,16 +114,16 @@
     Private Sub XBox_Validated(sender As Object, e As EventArgs) Handles XBox.Validated
         XBox.Text = XBox.Text
         MonProjet.BlocVert.X = Val(XBox.Text)
-        GenererImage()
+        Generer_Image()
     End Sub
     Private Sub YBox_Validated(sender As Object, e As EventArgs) Handles YBox.Validated
         YBox.Text = Val(YBox.Text)
         MonProjet.BlocVert.Y = Val(YBox.Text)
-        GenererImage()
+        Generer_Image()
     End Sub
     Private Sub TextBox_Validated(sender As Object, e As EventArgs) Handles TextBox.Validated
         MonProjet.Chaine = TextBox.Text
-        GenererImage()
+        Generer_Image()
     End Sub
 
     '==============================================================
@@ -139,7 +146,7 @@
         If EstEnfonce = True And (DateTime.Now.Ticks - DateDebut.Ticks) / 10000000 > TempsClic Then                           'Si un clic est enfoncée
             MonProjet.Offset = MonProjet.Offset + (AnciennePosition - PictureBox.MousePosition)
             AnciennePosition = PictureBox.MousePosition
-            GenererImage()
+            Generer_Image()
         End If
 
     End Sub
@@ -149,23 +156,20 @@
         EstEnfonce = False
         PositionFin = PictureBox.MousePosition
 
-        'If PositionAppui.Equals(PositionRelache) Then                      'Si le clic a eu lieu au même endroit
         If (DateTime.Now.Ticks - DateDebut.Ticks) / 10000000 < TempsClic Then     'Si le clic a eu lieu au même endroit
 
             Bloc = BlocVise()
 
-            If e.Button = MouseButtons.Left Then
-                If MonProjet.Blocs.Contains(Bloc) = False Then
-                    MonProjet.Blocs.Add(Bloc)
-                End If
-            ElseIf e.Button = MouseButtons.Right Then
+            If e.Button = MouseButtons.Left And MonProjet.Blocs.Contains(Bloc) = False Then
+                MonProjet.Blocs.Add(Bloc)
+                Canvas.FillRectangle(CouleurBloc, Bloc.X * Largeur - MonProjet.Offset.X, Bloc.Y * Hauteur - MonProjet.Offset.Y, Largeur, Hauteur)
 
-                If Bloc <> New Point(0, 0) Then
-                    MonProjet.Blocs.Remove(Bloc)
-                End If
+            ElseIf e.Button = MouseButtons.Right And Bloc <> New Point(0, 0) Then
+                MonProjet.Blocs.Remove(Bloc)
+                Canvas.FillRectangle(CouleurFont, Bloc.X * Largeur - MonProjet.Offset.X, Bloc.Y * Hauteur - MonProjet.Offset.Y, Largeur, Hauteur)
             End If
 
-            GenererImage()
+            'Generer_Image()
         End If
 
     End Sub
@@ -173,12 +177,12 @@
         If e.Delta < 0 Then
             If MonProjet.NB < 100 Then
                 MonProjet.NB += 2
-                GenererImage()
+                Generer_Image()
             End If
         Else
             If (MonProjet.NB > 5) Then
                 MonProjet.NB -= 2
-                GenererImage()
+                Generer_Image()
             End If
         End If
     End Sub
@@ -188,31 +192,31 @@
     '==============================================================
 
     Private Sub MainForm_DragDrop(sender As Object, e As DragEventArgs) Handles MyBase.DragDrop
-        Dim Erreur As ErreursSerialization = Glisser(e)
+        Dim Erreur As ErreursSerialization = MaSerialisation.Glisser_Deplacer(MonProjet, e)
         If Erreur = ErreursSerialization.Aucune Then
-            GenererImage()
+            Generer_Image()
         Else
-            Afficher_Erreurs_Serialization(Erreur)
+            MaSerialisation.Afficher_Erreurs_Serialization(Erreur)
         End If
     End Sub
     Private Sub MainForm_DragEnter(sender As Object, e As DragEventArgs) Handles MyBase.DragEnter
-        Glisser_Entrer(e)
+        MaSerialisation.Glisser_Entrer(e)
     End Sub
 
     '==============================================================
     '   AUTRE
     '==============================================================
 
-    Private Sub GenererImage()
+    Private Sub Generer_Image()
 
         Largeur = PictureBox.Width / MonProjet.NB
         Hauteur = Largeur / RatioLargeurHauteur
 
-        Canvas.FillRectangle(Brushes.Beige, 0, 0, PictureBox.Width, PictureBox.Height)
-        Canvas.FillRectangle(Brushes.Green, MonProjet.Blocs(0).X * Largeur - MonProjet.Offset.X, MonProjet.Blocs(0).Y * Hauteur - MonProjet.Offset.Y, Largeur, Hauteur)
+        Canvas.FillRectangle(CouleurFont, 0, 0, PictureBox.Width, PictureBox.Height)
+        Canvas.FillRectangle(CouleurOrigine, MonProjet.Blocs(0).X * Largeur - MonProjet.Offset.X, MonProjet.Blocs(0).Y * Hauteur - MonProjet.Offset.Y, Largeur, Hauteur)
 
         For Indice = 1 To MonProjet.Blocs.Count - 1
-            Canvas.FillRectangle(Brushes.Black, MonProjet.Blocs(Indice).X * Largeur - MonProjet.Offset.X, MonProjet.Blocs(Indice).Y * Hauteur - MonProjet.Offset.Y, Largeur, Hauteur)
+            Canvas.FillRectangle(CouleurBloc, MonProjet.Blocs(Indice).X * Largeur - MonProjet.Offset.X, MonProjet.Blocs(Indice).Y * Hauteur - MonProjet.Offset.Y, Largeur, Hauteur)
         Next
 
         TextBox.Text = MonProjet.Chaine
@@ -243,5 +247,9 @@
         Return BlocVisee
 
     End Function
+    Private Sub Timer1_Tick(sender As Object, e As EventArgs) Handles Timer1.Tick
+        Generer_Image()
+        Timer1.Enabled = False
+    End Sub
 
 End Class
