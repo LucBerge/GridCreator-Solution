@@ -26,7 +26,7 @@
     Private DateDebut, DateFin As Date
     Private PositionDebut, AnciennePosition, PositionFin As Point
 
-    Private MaSerialisation As New Serialisation(FormatFichier)
+    Private MaSerialisation As New Serialisation(Of Projet)(FormatFichier)
 
     '==============================================================
     '   NEW

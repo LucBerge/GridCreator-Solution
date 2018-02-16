@@ -8,7 +8,7 @@ Public Enum ErreursSerialization
     Abandon = 1
     Corrompu = 2
 End Enum
-Public Class Serialisation
+Public Class Serialisation(Of classe)
 
     '==============================================================
     '   VARIABLES
@@ -36,7 +36,7 @@ Public Class Serialisation
     '   OUVRIR CHARGER
     '==============================================================
 
-    Public Function Ouvrir(ByRef Objet As Projet) As ErreursSerialization
+    Public Function Ouvrir(ByRef Objet As classe) As ErreursSerialization
 
         Dim MaFenetre As New OpenFileDialog
         MaFenetre.Filter = Filtre 'Ajout du filtres
@@ -48,7 +48,7 @@ Public Class Serialisation
         End If
 
     End Function
-    Public Function Charger(ByRef Objet As Projet, ByVal CheminArg As String) As ErreursSerialization
+    Public Function Charger(ByRef Objet As classe, ByVal CheminArg As String) As ErreursSerialization
 
         Chemin = CheminArg                                  'Recupère le chemin du fichier
         Dim Resultat As ErreursSerialization                'Variable de retour
@@ -56,7 +56,7 @@ Public Class Serialisation
         Dim Deserialiseur As New BinaryFormatter()
 
         Try
-            Objet = CType(Deserialiseur.Deserialize(FluxDeFichier), Projet)  'Désérialisation et conversion de ce qu'on récupère dans le type « Film »
+            Objet = CType(Deserialiseur.Deserialize(FluxDeFichier), classe)  'Désérialisation et conversion de ce qu'on récupère dans le type « Film »
             Resultat = ErreursSerialization.Aucune
         Catch ex As Exception
             Resultat = ErreursSerialization.Corrompu
@@ -71,7 +71,7 @@ Public Class Serialisation
     '   ENREGISTRER ENRIGISTRER_SOUS
     '==============================================================
 
-    Public Function Enregistrer(ByVal Objet As Projet) As ErreursSerialization
+    Public Function Enregistrer(ByVal Objet As classe) As ErreursSerialization
 
         If File.Exists(Chemin) Then
             Dim FluxDeFichier As FileStream = File.Create(Chemin)   'On crée le fichier et récupère son flux
@@ -85,7 +85,7 @@ Public Class Serialisation
         End If
 
     End Function
-    Public Function Enregistrer_Sous(ByVal Objet As Projet) As ErreursSerialization
+    Public Function Enregistrer_Sous(ByVal Objet As classe) As ErreursSerialization
 
         Dim MaFenetre As New SaveFileDialog
         MaFenetre.Filter = Filtre 'Ajout du filtres
@@ -108,7 +108,7 @@ Public Class Serialisation
     '   GLISSER GLISSER_ENTRER
     '==============================================================
 
-    Public Function Glisser_Deplacer(ByRef Objet As Projet, ByRef e As DragEventArgs) As ErreursSerialization
+    Public Function Glisser_Deplacer(ByRef Objet As classe, ByRef e As DragEventArgs) As ErreursSerialization
         Dim Fichier As String = e.Data.GetData(DataFormats.FileDrop)(0)
         Return Charger(Objet, Fichier)
     End Function
