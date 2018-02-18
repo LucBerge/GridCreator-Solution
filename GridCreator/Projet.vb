@@ -1,7 +1,7 @@
 ﻿<Serializable>
 Public Class Projet
 
-    Public Offset As New Point(0, 0)
+    Public Offset As New Point(-104 * 5, -76 * 5)
     Public Blocs As New List(Of Point)
     Public BlocVert As New Point(0, 0)
 

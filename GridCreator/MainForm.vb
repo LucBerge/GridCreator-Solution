@@ -33,6 +33,7 @@
     '==============================================================
 
     Sub New()
+
         InitializeComponent()
         Canvas = PictureBox.CreateGraphics()
 
@@ -42,8 +43,6 @@
                 MaSerialisation.Afficher_Erreurs_Serialization(Erreur)
             End If
         End If
-
-        Generer_Image()
 
     End Sub
 
@@ -99,12 +98,11 @@
         MsgBox("L'outil GridCreator permet de créer des grilles et de générer le script correspondant." & vbCrLf & vbCrLf &
                 "===== LES BLOCS =====" & vbCrLf & vbCrLf &
                 "Bloc vert = Bloc initiale de la grille (non supprimable)" & vbCrLf &
-                "Bloc rouge = Bloc courant" & vbCrLf &
                 "Bloc noir = Bloc de la grille" & vbCrLf & vbCrLf &
                 "===== LES TOUCHES =====" & vbCrLf & vbCrLf &
-                "Entrer = Ajouter un bloc" & vbCrLf &
-                "Suppr = Supprimer un bloc" & vbCrLf &
-                "Flèches directionnelles = Déplacer le bloc rouge", MsgBoxStyle.Information)
+                "Clic gauche = Ajouter un bloc" & vbCrLf &
+                "Clic droit = Supprimer un bloc" & vbCrLf &
+                "Gisser = Déplacer la grille", MsgBoxStyle.Information)
     End Sub
 
     '==============================================================
@@ -112,18 +110,15 @@
     '==============================================================
 
     Private Sub XBox_Validated(sender As Object, e As EventArgs) Handles XBox.Validated
-        XBox.Text = XBox.Text
         MonProjet.BlocVert.X = Val(XBox.Text)
-        Generer_Image()
+        XBox.Text = MonProjet.BlocVert.X
     End Sub
     Private Sub YBox_Validated(sender As Object, e As EventArgs) Handles YBox.Validated
-        YBox.Text = Val(YBox.Text)
         MonProjet.BlocVert.Y = Val(YBox.Text)
-        Generer_Image()
+        YBox.Text = MonProjet.BlocVert.Y
     End Sub
     Private Sub TextBox_Validated(sender As Object, e As EventArgs) Handles TextBox.Validated
         MonProjet.Chaine = TextBox.Text
-        Generer_Image()
     End Sub
 
     '==============================================================
@@ -168,8 +163,6 @@
                 MonProjet.Blocs.Remove(Bloc)
                 Canvas.FillRectangle(CouleurFont, Bloc.X * Largeur - MonProjet.Offset.X, Bloc.Y * Hauteur - MonProjet.Offset.Y, Largeur, Hauteur)
             End If
-
-            'Generer_Image()
         End If
 
     End Sub
@@ -185,6 +178,9 @@
                 Generer_Image()
             End If
         End If
+    End Sub
+    Private Sub PictureBox_MouseLeave(sender As Object, e As EventArgs) Handles PictureBox.MouseLeave
+        PositionLabel.Text = "X:Y"
     End Sub
 
     '==============================================================
@@ -241,8 +237,10 @@
             SigneY = 1
         End If
 
-        BlocVisee.X = PositionImage.X \ Largeur - SigneX
-        BlocVisee.Y = PositionImage.Y \ Hauteur - SigneY
+        If Timer1.Enabled = False Then
+            BlocVisee.X = PositionImage.X \ Largeur - SigneX
+            BlocVisee.Y = PositionImage.Y \ Hauteur - SigneY
+        End If
 
         Return BlocVisee
 
